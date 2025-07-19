@@ -623,6 +623,77 @@ import Logging
             }
         }
 
+                public func send_get(_ message: Data) async throws {
+            guard isConnected else {
+                throw MCPError.internalError("Transport not connected")
+            }
+
+            // Add newline as delimiter
+            var messageWithNewline = message
+            messageWithNewline.append(UInt8(ascii: "\n"))
+
+            // Use a local actor-isolated variable to track continuation state
+            var sendContinuationResumed = false
+
+            try await withCheckedThrowingContinuation {
+                [weak self] (continuation: CheckedContinuation<Void, Swift.Error>) in
+                guard let self = self else {
+                    continuation.resume(throwing: MCPError.internalError("Transport deallocated"))
+                    return
+                }
+
+                connection.send(
+                    content: messageWithNewline,
+                    contentContext: .defaultMessage,
+                    isComplete: true,
+                    completion: .contentProcessed { [weak self] error in
+                        guard let self = self else { return }
+
+                        Task { @MainActor in
+                            if !sendContinuationResumed {
+                                sendContinuationResumed = true
+                                if let error = error {
+                                    self.logger.error("Send error: \(error)")
+
+                                    // Check if we should attempt to reconnect on send failure
+                                    let isStopping = await self.isStopping  // Await actor-isolated property
+                                    if !isStopping && self.reconnectionConfig.enabled {
+                                        let isConnected = await self.isConnected
+                                        if isConnected {
+                                            if error.isConnectionLost {
+                                                self.logger.warning(
+                                                    "Connection appears broken, will attempt to reconnect..."
+                                                )
+
+                                                // Schedule connection restart
+                                                Task { [weak self] in  // Operate on self's executor
+                                                    guard let self = self else { return }
+
+                                                    await self.setIsConnected(false)
+
+                                                    try? await Task.sleep(for: .milliseconds(500))
+
+                                                    let currentIsStopping = await self.isStopping
+                                                    if !currentIsStopping {
+                                                        // Cancel the connection, then attempt to reconnect fully.
+                                                        self.connection.cancel()
+                                                        try? await self.connect()
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    continuation.resume(
+                                        throwing: MCPError.internalError("Send error: \(error)"))
+                                } else {
+                                    continuation.resume()
+                                }
+                            }
+                        }
+                    })
+            }
+        }
         /// Receives data in an async sequence
         ///
         /// This returns an AsyncThrowingStream that emits Data objects representing
