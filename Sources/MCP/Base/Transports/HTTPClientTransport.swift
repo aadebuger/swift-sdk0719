@@ -199,7 +199,7 @@ public actor HTTPClientTransport: Transport {
         guard isConnected else {
             throw MCPError.internalError("Transport not connected")
         }
-
+        print("send____")
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
         request.addValue("application/json, text/event-stream", forHTTPHeaderField: "Accept")
