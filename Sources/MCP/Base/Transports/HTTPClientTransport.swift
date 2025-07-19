@@ -199,7 +199,7 @@ public actor HTTPClientTransport: Transport {
         guard isConnected else {
             throw MCPError.internalError("Transport not connected")
         }
-        print("send____02")
+        print("send____03")
         
      // Print the data being sent         
         if let dataString = String(data: data, encoding: .utf8) {
@@ -337,12 +337,14 @@ public actor HTTPClientTransport: Transport {
         case 405:
             // If we get a 405, it means the server does not support the requested method
             // If streaming was requested, we should cancel the streaming task
+            /*
             if streaming {
                 self.streamingTask?.cancel()
                 throw MCPError.internalError("Server does not support streaming")
             }
             throw MCPError.internalError("Method not allowed")
-
+            */
+            print("____405")
         case 408:
             throw MCPError.internalError("Request timeout")
 
