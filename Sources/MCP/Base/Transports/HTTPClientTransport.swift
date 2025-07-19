@@ -199,7 +199,13 @@ public actor HTTPClientTransport: Transport {
         guard isConnected else {
             throw MCPError.internalError("Transport not connected")
         }
-        print("send____01")
+        print("send____02")
+        
+     // Print the data being sent         if let dataString = String(data: data, encoding: .utf8) {
+         print("Sending data: \(dataString)")
+     } else {
+         print("Sending data: [binary data of length \(data.count)]")
+     }
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
         request.addValue("application/json, text/event-stream", forHTTPHeaderField: "Accept")
