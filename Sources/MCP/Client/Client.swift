@@ -508,7 +508,7 @@ public actor Client {
                 clientInfo: clientInfo
             ))
 
-        let result = try await send(request)
+        let result = try await send_get(request)
 
         self.serverCapabilities = result.capabilities
         self.serverVersion = result.protocolVersion
