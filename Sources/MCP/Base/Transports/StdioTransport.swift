@@ -218,6 +218,32 @@ import struct Foundation.Data
                 }
             }
         }
+        public func send_get(_ message: Data) async throws {
+            guard isConnected else {
+                throw MCPError.transportError(Errno(rawValue: ENOTCONN))
+            }
+
+            // Add newline as delimiter
+            var messageWithNewline = message
+            messageWithNewline.append(UInt8(ascii: "\n"))
+
+            var remaining = messageWithNewline
+            while !remaining.isEmpty {
+                do {
+                    let written = try remaining.withUnsafeBytes { buffer in
+                        try output.write(UnsafeRawBufferPointer(buffer))
+                    }
+                    if written > 0 {
+                        remaining = remaining.dropFirst(written)
+                    }
+                } catch let error where MCPError.isResourceTemporarilyUnavailable(error) {
+                    try await Task.sleep(for: .milliseconds(10))
+                    continue
+                } catch {
+                    throw MCPError.transportError(error)
+                }
+            }
+        }
 
         /// Receives messages from the transport.
         ///
