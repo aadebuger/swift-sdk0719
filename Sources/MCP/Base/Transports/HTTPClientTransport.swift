@@ -201,7 +201,8 @@ public actor HTTPClientTransport: Transport {
         }
         print("send____02")
         
-     // Print the data being sent         if let dataString = String(data: data, encoding: .utf8) {
+     // Print the data being sent         
+        if let dataString = String(data: data, encoding: .utf8) {
          print("Sending data: \(dataString)")
      } else {
          print("Sending data: [binary data of length \(data.count)]")
