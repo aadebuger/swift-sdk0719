@@ -325,7 +325,41 @@ public actor Client {
             }
         }
     }
+ public func send_get<M: Method>(_ request: Request<M>) async throws -> M.Result {
+        guard let connection = connection else {
+            throw MCPError.internalError("Client connection not initialized")
+        }
 
+        let requestData = try encoder.encode(request)
+
+        // Store the pending request first
+        return try await withCheckedThrowingContinuation { continuation in
+            Task {
+                // Add the pending request before attempting to send
+                self.addPendingRequest(
+                    id: request.id,
+                    continuation: continuation,
+                    type: M.Result.self
+                )
+
+                // Send the request data
+                do {
+                    // Use the existing connection send
+                    try await connection.send(requestData)
+                } catch {
+                    // If send fails, try to remove the pending request.
+                    // Resume with the send error only if we successfully removed the request,
+                    // indicating the response handler hasn't processed it yet.
+                    if self.removePendingRequest(id: request.id) != nil {
+                        continuation.resume(throwing: error)
+                    }
+                    // Otherwise, the request was already removed by the response handler
+                    // or by disconnect, so the continuation was already resumed.
+                    // Do nothing here.
+                }
+            }
+        }
+    }
     private func addPendingRequest<T: Sendable & Decodable>(
         id: ID,
         continuation: CheckedContinuation<T, Swift.Error>,
