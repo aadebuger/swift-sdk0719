@@ -14,7 +14,8 @@ public protocol Transport: Actor {
 
     /// Sends data
     func send(_ data: Data) async throws
-
+    /// Sends data
+    func send_get(_ data: Data) async throws
     /// Receives data in an async sequence
     func receive() -> AsyncThrowingStream<Data, Swift.Error>
 }
