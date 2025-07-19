@@ -345,7 +345,7 @@ public actor Client {
                 // Send the request data
                 do {
                     // Use the existing connection send
-                    try await connection.send(requestData)
+                    try await connection.send_get(requestData)
                 } catch {
                     // If send fails, try to remove the pending request.
                     // Resume with the send error only if we successfully removed the request,
