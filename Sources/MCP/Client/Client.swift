@@ -341,11 +341,12 @@ public actor Client {
                     continuation: continuation,
                     type: M.Result.self
                 )
-
+                print("send_get start")
                 // Send the request data
                 do {
                     // Use the existing connection send
                     try await connection.send_get(requestData)
+                      print("send_get over ")
                 } catch {
                     // If send fails, try to remove the pending request.
                     // Resume with the send error only if we successfully removed the request,
