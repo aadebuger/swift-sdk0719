@@ -541,7 +541,7 @@ public actor Client {
                 capabilities: capabilities,
                 clientInfo: clientInfo
             ))
-
+        print("requst====")
         let result = try await send_get(request)
 
         self.serverCapabilities = result.capabilities
