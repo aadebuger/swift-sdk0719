@@ -228,6 +228,40 @@ public actor HTTPClientTransport: Transport {
             try await processResponse(response: response, stream: responseStream)
         #endif
     }
+     public func send_get(_ data: Data) async throws {
+        guard isConnected else {
+            throw MCPError.internalError("Transport not connected")
+        }
+        print("send____05")
+        
+     // Print the data being sent         
+        if let dataString = String(data: data, encoding: .utf8) {
+         print("Sending data: \(dataString)")
+     } else {
+         print("Sending data: [binary data of length \(data.count)]")
+     }
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "GET"
+        request.addValue("application/json, text/event-stream", forHTTPHeaderField: "Accept")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = data
+
+        // Add session ID if available
+        if let sessionID = sessionID {
+            request.addValue(sessionID, forHTTPHeaderField: "Mcp-Session-Id")
+        }
+
+        #if os(Linux)
+            // Linux implementation using data(for:) instead of bytes(for:)
+            let (responseData, response) = try await session.data(for: request)
+            try await processResponse(response: response, data: responseData)
+        #else
+            // macOS and other platforms with bytes(for:) support
+            let (responseStream, response) = try await session.bytes(for: request)
+            try await processResponse(response: response, stream: responseStream)
+        #endif
+    }
+
 
     #if os(Linux)
         // Process response with data payload (Linux)
