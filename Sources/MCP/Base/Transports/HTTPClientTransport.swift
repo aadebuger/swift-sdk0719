@@ -143,10 +143,10 @@ public actor HTTPClientTransport: Transport {
     public func connect() async throws {
         guard !isConnected else { return }
         isConnected = true
-
+        print("setup start")
         // Setup initial session ID signal
         setupInitialSessionIDSignal()
-
+        print("setupInitialSessionIDSignal over")
         if streaming {
             // Start listening to server events
             streamingTask = Task { await startListeningForServerEvents() }
@@ -199,7 +199,7 @@ public actor HTTPClientTransport: Transport {
         guard isConnected else {
             throw MCPError.internalError("Transport not connected")
         }
-        print("send____03")
+        print("send____05")
         
      // Print the data being sent         
         if let dataString = String(data: data, encoding: .utf8) {
@@ -453,7 +453,7 @@ public actor HTTPClientTransport: Transport {
                     "Proceeding with SSE connection attempt; sessionID is nil. This might be expected for stateless servers or if initialize hasn't provided one yet."
                 )
             }
-
+            print("connectToEventStream");
             // Retry loop for connection drops
             while isConnected && !Task.isCancelled {
                 do {
